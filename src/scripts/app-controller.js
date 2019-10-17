@@ -1,9 +1,6 @@
 /* global PushClient, MaterialComponentsSnippets */
 /* eslint-env browser */
 
-const BACKEND_ORIGIN = `https://simple-push-demo.appspot.com`;
-// const BACKEND_ORIGIN = `http://localhost:8080`;
-
 class AppController {
   constructor() {
     this._encryptionHelper =
@@ -54,11 +51,28 @@ class AppController {
     this._subscriptionUpdate = this._subscriptionUpdate.bind(this);
 
     this._toggleSwitch = toggleSwitch;
-    this._pushClient = new PushClient(
-      this._stateChangeListener,
-      this._subscriptionUpdate,
-      window.gauntface.CONSTANTS.APPLICATION_KEYS.publicKey
-    );
+
+    const fetchOptions = {
+      method: 'get',
+    };
+
+    const response = await fetch(`/mobileservices/push/v1/runtime/applications/dummy/pushconfigurations/os/w3c/pushid`, fetchOptions);
+    if (response.status >= 400 && response.status < 500) {
+      return response.text()
+      .then((responseText) => {
+        console.log('Failed web push response: ', response, response.status);
+      throw new Error(`Failed to send push message via web push protocol: ` +
+        `<pre>${encodeURI(responseText)}</pre>`);
+      });
+    }
+    else {
+      const pushid = await response.json();
+      this._pushClient = new PushClient(
+        this._stateChangeListener,
+        this._subscriptionUpdate,
+        pushid.pushId
+      );
+    }
 
     document.querySelector('.js-push-toggle-switch > input')
     .addEventListener('click', (event) => {
@@ -145,7 +159,30 @@ class AppController {
       // Remove any subscription from your servers if you have
       // set it up.
       this._sendPushOptions.style.opacity = 0;
+      const response = await fetch('/mobileservices/push/v1/runtime/push/v1/runtime/applications/any/os/w3c/devices', {
+        method: 'DELETE',
+        cache: 'no-cache' 
+      });
       return;
+    }
+
+    const response = await fetch('/mobileservices/push/v1/runtime/push/v1/runtime/applications/any/os/w3c/devices', {
+      method: 'POST',
+      cache: 'no-cache',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({pushToken: JSON.stringify(subscription)}) 
+    });
+    if (response.status == 409) {
+      const response2 = await fetch('/mobileservices/push/v1/runtime/push/v1/runtime/applications/any/os/w3c/devices', {
+        method: 'PUT',
+        cache: 'no-cache',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({pushToken: JSON.stringify(subscription)}) 
+      });
     }
 
     this._subscriptionJSONCode.textContent =
