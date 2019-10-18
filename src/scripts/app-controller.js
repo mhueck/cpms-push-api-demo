@@ -52,27 +52,25 @@ class AppController {
 
     this._toggleSwitch = toggleSwitch;
 
-    const fetchOptions = {
-      method: 'get',
-    };
-
-    const response = await fetch(`/mobileservices/push/v1/runtime/applications/dummy/pushconfigurations/os/w3c/pushid`, fetchOptions);
-    if (response.status >= 400 && response.status < 500) {
-      return response.text()
-      .then((responseText) => {
-        console.log('Failed web push response: ', response, response.status);
-      throw new Error(`Failed to send push message via web push protocol: ` +
-        `<pre>${encodeURI(responseText)}</pre>`);
+    fetch('/mobileservices/push/v1/runtime/applications/dummy/pushconfigurations/os/w3cpushapi/pushid').then((response) => {
+      if (response.status >= 400 && response.status < 500) {
+        return response.text()
+        .then((responseText) => {
+          console.log('Failed web push response: ', response, response.status);
+        throw new Error(`Failed to send push message via web push protocol: ` +
+          `<pre>${encodeURI(responseText)}</pre>`);
+        });
+      }
+      else {
+        response.json().then((pushid) => {
+        this._pushClient = new PushClient(
+          this._stateChangeListener,
+          this._subscriptionUpdate,
+          pushid.pushId
+        );
       });
     }
-    else {
-      const pushid = await response.json();
-      this._pushClient = new PushClient(
-        this._stateChangeListener,
-        this._subscriptionUpdate,
-        pushid.pushId
-      );
-    }
+    });
 
     document.querySelector('.js-push-toggle-switch > input')
     .addEventListener('click', (event) => {
@@ -159,31 +157,43 @@ class AppController {
       // Remove any subscription from your servers if you have
       // set it up.
       this._sendPushOptions.style.opacity = 0;
-      const response = await fetch('/mobileservices/push/v1/runtime/push/v1/runtime/applications/any/os/w3c/devices', {
+      fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices', {
         method: 'DELETE',
         cache: 'no-cache' 
-      });
+      }).then((response) => {
+         console.log('Push registration delete response: ', response, response.status);
+       });
       return;
     }
 
-    const response = await fetch('/mobileservices/push/v1/runtime/push/v1/runtime/applications/any/os/w3c/devices', {
+    fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices', {
       method: 'POST',
       cache: 'no-cache',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({pushToken: JSON.stringify(subscription)}) 
+    }).then((response) => {
+      if (response.status == 409) {
+        const response2 = fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices', {
+          method: 'DELETE',
+          cache: 'no-cache'
+        }).then((response) => {
+          fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices', {
+            method: 'POST',
+            cache: 'no-cache',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({pushToken: JSON.stringify(subscription)}) 
+          }).then((response) => {
+            console.log('Push registration update response: ', response, response.status); 
+          });
+	});
+      } else {
+        console.log('Push registration response: ', response, response.status);
+      }
     });
-    if (response.status == 409) {
-      const response2 = await fetch('/mobileservices/push/v1/runtime/push/v1/runtime/applications/any/os/w3c/devices', {
-        method: 'PUT',
-        cache: 'no-cache',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({pushToken: JSON.stringify(subscription)}) 
-      });
-    }
 
     this._subscriptionJSONCode.textContent =
       JSON.stringify(subscription, null, 2);
