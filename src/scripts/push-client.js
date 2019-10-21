@@ -122,9 +122,6 @@ class PushClient {
 
       this._stateChangeCb(this._state.SUBSCRIBED);
 
-      // Update the current state with the
-      // subscriptionid and endpoint
-      this._subscriptionUpdate(subscription);
     })
     .catch((err) => {
       console.log('setUpPushPermission() ', err);
