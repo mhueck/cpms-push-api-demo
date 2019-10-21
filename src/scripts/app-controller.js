@@ -17,6 +17,9 @@ class AppController {
         if (response.status == 200) {
           response.json().then((meservice) => {
             this._username = meservice.id;
+            if( meservice.name && meservice.name.givenName ) {
+              this._payloadTextField.value = "Hello " +meservice.name.givenName;
+            }
             this.updatePushInfo();
           });
         }
