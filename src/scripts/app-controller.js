@@ -56,33 +56,33 @@ class AppController {
     fetch('/mobileservices/push/v1/runtime/applications/dummy/pushconfigurations/os/w3cpushapi/pushid').then((response) => {
       if (response.status >= 400 && response.status < 500) {
         return response.text()
-        .then((responseText) => {
-          console.log('Failed web push response: ', response, response.status);
-        throw new Error(`Failed to send push message via web push protocol: ` +
-          `<pre>${encodeURI(responseText)}</pre>`);
-        });
+          .then((responseText) => {
+            console.log('Failed web push response: ', response, response.status);
+            throw new Error(`Failed to send push message via web push protocol: ` +
+              `<pre>${encodeURI(responseText)}</pre>`);
+          });
       }
       else {
         response.json().then((pushid) => {
-        this._pushClient = new PushClient(
-          this._stateChangeListener,
-          this._subscriptionUpdate,
-          pushid.pushId
-        );
-      });
-    }
+          this._pushClient = new PushClient(
+            this._stateChangeListener,
+            this._subscriptionUpdate,
+            pushid.pushId
+          );
+        });
+      }
     });
 
     document.querySelector('.js-push-toggle-switch > input')
-    .addEventListener('click', (event) => {
-      // Inverted because clicking will change the checked state by
-      // the time we get here
-      if (event.target.checked) {
-        this._pushClient.subscribeDevice();
-      } else {
-        this._pushClient.unsubscribeDevice();
-      }
-    });
+      .addEventListener('click', (event) => {
+        // Inverted because clicking will change the checked state by
+        // the time we get here
+        if (event.target.checked) {
+          this._pushClient.subscribeDevice();
+        } else {
+          this._pushClient.unsubscribeDevice();
+        }
+      });
 
     const sendPushViaXHRButton = document.querySelector('.js-send-push-button');
     sendPushViaXHRButton.addEventListener('click', () => {
@@ -100,14 +100,14 @@ class AppController {
     // Check that service workers are supported
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./service-worker.js')
-      .catch((err) => {
-        this.showErrorMessage(
-          'Unable to Register SW',
-          'Sorry this demo requires a service worker to work and it ' +
-          'failed to install - sorry :('
-        );
-        console.error(err);
-      });
+        .catch((err) => {
+          this.showErrorMessage(
+            'Unable to Register SW',
+            'Sorry this demo requires a service worker to work and it ' +
+            'failed to install - sorry :('
+          );
+          console.error(err);
+        });
     } else {
       this.showErrorMessage(
         'Service Worker Not Supported',
@@ -155,41 +155,41 @@ class AppController {
   _subscriptionUpdate(subscription) {
     this._currentSubscription = subscription;
     var deviceId = localStorage.getItem("mobile-device-id");
-    if( ! deviceId ) {
+    if (!deviceId) {
       deviceId = Math.floor(Math.random() * 1000000000).toString();
       localStorage.setItem("mobile-device-id", deviceId)
     }
     if (!subscription) {
       // Remove any subscription from Mobile Services
       this._sendPushOptions.style.opacity = 0;
-      fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices/'+deviceId, {
+      fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices/' + deviceId, {
         method: 'DELETE',
-        cache: 'no-cache' 
+        cache: 'no-cache'
       }).then((response) => {
-         console.log('Push registration delete response: ', response, response.status);
-       });
+        console.log('Push registration delete response: ', response, response.status);
+      });
       return;
     }
-    // try to register the browser - since there is no device id
-    fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices/'+deviceId, {
+    // try to register the browser - if ther is a conflict we will update the existing record
+    fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices/' + deviceId, {
       method: 'POST',
       cache: 'no-cache',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({pushToken: JSON.stringify(subscription)}) 
+      body: JSON.stringify({ pushToken: JSON.stringify(subscription) })
     }).then((response) => {
       if (response.status == 409) {
-          fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices/'+deviceId, {
-            method: 'PUT',
-            cache: 'no-cache',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({pushToken: JSON.stringify(subscription)}) 
-          }).then((response) => {
-            console.log('Push registration update response: ', response, response.status); 
-          });
+        fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices/' + deviceId, {
+          method: 'PUT',
+          cache: 'no-cache',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ pushToken: JSON.stringify(subscription) })
+        }).then((response) => {
+          console.log('Push registration update response: ', response, response.status);
+        });
       } else {
         console.log('Push registration response: ', response, response.status);
       }
@@ -221,138 +221,21 @@ class AppController {
 
   updatePushInfo() {
     // Let's look at payload
-    const payloadText = this._payloadTextField.value;
-    return this._encryptionHelper.getRequestDetails(
-      this._currentSubscription, payloadText)
-    .then((requestDetails) => {
-      let curlCommand = `curl "${requestDetails.endpoint}" --request POST`;
-      let curlError = null;
-
-      document.querySelector('.js-endpoint').textContent =
-        requestDetails.endpoint;
-      const headersList = document.querySelector('.js-headers-list');
-      while (headersList.hasChildNodes()) {
-        headersList.removeChild(headersList.firstChild);
-      }
-      Object.keys(requestDetails.headers).forEach((header) => {
-        const liElement = document.createElement('p');
-        liElement.innerHTML = `<span>${header}</span>: ` +
-          `${requestDetails.headers[header]}`;
-        headersList.appendChild(liElement);
-
-        curlCommand +=
-          ` --header "${header}: ${requestDetails.headers[header]}"`;
-      });
-
-      const bodyFormat = document.querySelector('.js-body-format');
-      const bodyContent = document.querySelector('.js-body-content');
-      if (requestDetails.body && requestDetails.body instanceof ArrayBuffer) {
-        bodyFormat.textContent = 'Stream';
-        bodyContent.textContent = 'Unable to display';
-
-        curlCommand = null;
-        curlError = 'Sorry, but because the web push ' +
-          'protocol requires a stream as the body of the request, there is ' +
-          'no CURL command that will stream an encrypted payload.';
-      } else if (requestDetails.body) {
-        bodyFormat.textContent = 'String';
-        bodyContent.textContent = requestDetails.body;
-
-        curlCommand += ` -d ${JSON.stringify(requestDetails.body)}`;
-      } else {
-        bodyFormat.textContent = 'No Body';
-        bodyContent.textContent = 'N/A';
-      }
-
-      const curlCodeElement = document.querySelector('.js-curl-code');
-      const curlMsgElement = document.querySelector('.js-curl-copy-msg');
-      const curlErrorMsgElement = document.querySelector('.js-curl-error-msg');
-      if (curlCommand === null) {
-        curlCodeElement.style.display = 'none';
-        curlMsgElement.style.display = 'none';
-        curlErrorMsgElement.textContent = curlError;
-        curlErrorMsgElement.style.display = 'block';
-      } else {
-        curlCodeElement.textContent = curlCommand;
-        curlCodeElement.style.display = 'block';
-        curlMsgElement.style.display = 'block';
-        curlErrorMsgElement.style.display = 'none';
-      }
-    });
-  }
-
-  getGCMInfo(subscription, payload, apiKey) {
-    const headers = {};
-
-    headers.Authorization = `key=${apiKey}`;
-    headers['Content-Type'] = `application/json`;
-
-    const endpointSections = subscription.endpoint.split('/');
-    const subscriptionId = endpointSections[endpointSections.length - 1];
-    const gcmAPIData = {
-      to: subscriptionId,
-    };
-
-    if (payload) {
-      gcmAPIData['raw_data'] = this.toBase64(payload.cipherText); // eslint-disable-line
-      headers.Encryption = `salt=${payload.salt}`;
-      headers['Crypto-Key'] = `dh=${payload.publicServerKey}`;
-      headers['Content-Encoding'] = payload.contentEncoding;
+    let payloadText = this._payloadTextField.value;
+    if (!payloadText) {
+      payloadText = 'Message from Mobile Services';
     }
+    let curlCommand = `curl -H 'x-api-key: API_KEY_FROM_PUSH_SERVICE_KEY' -H 'content-type: application/json' --data '{"users":["YOUR_USER_ID"],"notification": {"alert":"${payloadText}"}}' URL_FROM_PUSH_SERVICE_KEY`;
+    let curlError = null;
 
-    return {
-      headers: headers,
-      body: JSON.stringify(gcmAPIData),
-      endpoint: 'https://android.googleapis.com/gcm/send',
-    };
-  }
+    const curlCodeElement = document.querySelector('.js-curl-code');
+    const curlMsgElement = document.querySelector('.js-curl-copy-msg');
+    const curlErrorMsgElement = document.querySelector('.js-curl-error-msg');
 
-  sendPushMessage(subscription, payloadText) {
-    return this._encryptionHelper.getRequestDetails(
-      this._currentSubscription, payloadText)
-    .then((requestDetails) => {
-      // Some push services don't allow CORS so have to forward
-      // it to a different server to make the request which does support
-      // CORs
-      return this.sendRequestToProxyServer(requestDetails);
-    });
-  }
-
-  sendRequestToProxyServer(requestInfo) {
-    console.log('Sending XHR Proxy Server', requestInfo);
-
-    const fetchOptions = {
-      method: 'post',
-    };
-
-    // Can't send a stream like is needed for web push protocol,
-    // so needs to convert it to base 64 here and the server will
-    // convert back and pass as a stream
-    if (requestInfo.body && requestInfo.body instanceof ArrayBuffer) {
-      requestInfo.body = this.toBase64(requestInfo.body);
-      fetchOptions.body = requestInfo;
-    }
-
-    fetchOptions.body = JSON.stringify(requestInfo);
-
-    fetch(`${BACKEND_ORIGIN}/api/v2/sendpush`, fetchOptions)
-    .then(function(response) {
-      if (response.status >= 400 && response.status < 500) {
-        return response.text()
-        .then((responseText) => {
-          console.log('Failed web push response: ', response, response.status);
-        throw new Error(`Failed to send push message via web push protocol: ` +
-          `<pre>${encodeURI(responseText)}</pre>`);
-        });
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-      this.showErrorMessage(
-        'Ooops Unable to Send a Push',
-        err
-      );
-    });
+    curlCodeElement.textContent = curlCommand;
+    curlCodeElement.style.display = 'block';
+    curlMsgElement.style.display = 'block';
+    curlErrorMsgElement.style.display = 'none';
   }
 
   toBase64(arrayBuffer, start, end) {
@@ -380,7 +263,7 @@ class AppController {
 }
 
 if (window) {
-  window.onload = function() {
+  window.onload = function () {
     if (!navigator.serviceWorker) {
       console.warn('Service worker not supported.');
       return;
@@ -392,18 +275,18 @@ if (window) {
 
     const appController = new AppController();
     appController.ready
-    .then(() => {
-      document.body.dataset.simplePushDemoLoaded = true;
+      .then(() => {
+        document.body.dataset.simplePushDemoLoaded = true;
 
-      const host = 'gauntface.github.io';
-      if (
-        window.location.host === host &&
-        window.location.protocol !== 'https:') {
-        // Enforce HTTPS
-        window.location.protocol = 'https';
-      }
+        const host = 'gauntface.github.io';
+        if (
+          window.location.host === host &&
+          window.location.protocol !== 'https:') {
+          // Enforce HTTPS
+          window.location.protocol = 'https';
+        }
 
-      appController.registerServiceWorker();
-    });
+        appController.registerServiceWorker();
+      });
   };
 }
