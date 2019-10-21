@@ -52,6 +52,7 @@ class AppController {
 
     this._toggleSwitch = toggleSwitch;
 
+    // this loads the public key from Mobile Services
     fetch('/mobileservices/push/v1/runtime/applications/dummy/pushconfigurations/os/w3cpushapi/pushid').then((response) => {
       if (response.status >= 400 && response.status < 500) {
         return response.text()
@@ -153,11 +154,15 @@ class AppController {
 
   _subscriptionUpdate(subscription) {
     this._currentSubscription = subscription;
+    var deviceId = localStorage.getItem("mobile-device-id");
+    if( ! deviceId ) {
+      deviceId = Math.floor(Math.random() * 1000000000).toString();
+      localStorage.setItem("mobile-device-id", deviceId)
+    }
     if (!subscription) {
-      // Remove any subscription from your servers if you have
-      // set it up.
+      // Remove any subscription from Mobile Services
       this._sendPushOptions.style.opacity = 0;
-      fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices', {
+      fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices/'+deviceId, {
         method: 'DELETE',
         cache: 'no-cache' 
       }).then((response) => {
@@ -165,8 +170,8 @@ class AppController {
        });
       return;
     }
-
-    fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices', {
+    // try to register the browser - since there is no device id
+    fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices/'+deviceId, {
       method: 'POST',
       cache: 'no-cache',
       headers: {
@@ -175,12 +180,8 @@ class AppController {
       body: JSON.stringify({pushToken: JSON.stringify(subscription)}) 
     }).then((response) => {
       if (response.status == 409) {
-        const response2 = fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices', {
-          method: 'DELETE',
-          cache: 'no-cache'
-        }).then((response) => {
-          fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices', {
-            method: 'POST',
+          fetch('/mobileservices/push/v1/runtime/applications/any/os/w3cpushapi/devices/'+deviceId, {
+            method: 'PUT',
             cache: 'no-cache',
             headers: {
               'Content-Type': 'application/json'
@@ -189,7 +190,6 @@ class AppController {
           }).then((response) => {
             console.log('Push registration update response: ', response, response.status); 
           });
-	});
       } else {
         console.log('Push registration response: ', response, response.status);
       }
