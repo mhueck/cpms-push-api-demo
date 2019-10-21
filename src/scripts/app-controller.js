@@ -75,14 +75,6 @@ class AppController {
         }
       });
 
-    const sendPushViaXHRButton = document.querySelector('.js-send-push-button');
-    sendPushViaXHRButton.addEventListener('click', () => {
-      if (this._currentSubscription) {
-        this.sendPushMessage(this._currentSubscription,
-          this._payloadTextField.value);
-      }
-    });
-
     // allow snippets to be copied via click
     new MaterialComponentsSnippets().init();
   }
