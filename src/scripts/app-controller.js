@@ -11,7 +11,7 @@ class AppController {
       this.updatePushInfo();
     };
     this._username = 'YOUR_USERNAME';
-    const appId = window.location.hostname.replace(/^[^\.]+-([^\.-]+)\.+/, '$1');
+    const appId = window.location.hostname.replace(/^[^\.]+-([^-\.]+)\..+$/, '$1');
     if( appId ) {
       fetch(`/mobileservices/application/${appId}/userservice/application/${appId}/v1/Me`).then((response) => {
         if (response.status == 200) {
