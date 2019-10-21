@@ -4,13 +4,6 @@
 class AppController {
   constructor() {
 
-    const contentEncodingCode = document.querySelector(
-      '.js-supported-content-encodings');
-    contentEncodingCode.textContent =
-      JSON.stringify(
-        PushManager.supportedContentEncodings ||
-        ['aesgcm'], null, 2);
-
     // This div contains the UI for CURL commands to trigger a push
     this._sendPushOptions = document.querySelector('.js-send-push-options');
     this._subscriptionJSONCode = document.querySelector(
