@@ -22,11 +22,8 @@ self.addEventListener('push', function(event) {
   }
 
   event.waitUntil(
-    Promise.all([
       self.registration.showNotification(
-        notificationTitle, notificationOptions)
-    ])
-  );
+        notificationTitle, notificationOptions));
 });
 
 self.addEventListener('notificationclick', function(event) {
@@ -39,16 +36,7 @@ self.addEventListener('notificationclick', function(event) {
 
   event.waitUntil(
     Promise.all([
-      clickResponsePromise,
-      self.analytics.trackEvent('notification-click'),
-    ])
-  );
-});
-
-self.addEventListener('notificationclose', function(event) {
-  event.waitUntil(
-    Promise.all([
-      self.analytics.trackEvent('notification-close'),
+      clickResponsePromise
     ])
   );
 });
