@@ -11,7 +11,7 @@ self.addEventListener('push', function(event) {
     badge: './images/badge-72x72.png',
     tag: 'simple-push-demo-notification',
     data: {
-      url: 'https://developers.google.com/web/fundamentals/getting-started/push-notifications/',
+      url: 'https://help.sap.com/viewer/product/SAP_CLOUD_PLATFORM_MOBILE_SERVICES/Cloud/en-US',
     },
   };
 

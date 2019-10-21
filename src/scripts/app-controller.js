@@ -10,6 +10,18 @@ class AppController {
     this._payloadTextField.oninput = () => {
       this.updatePushInfo();
     };
+    this._username = 'YOUR_USERNAME';
+    const appId = window.location.hostname.replace(/^[^.]+-([^.-]+)\.+/, '$1');
+    if( appId ) {
+      fetch(`/mobileservices/application/${appId}/userservice/application/${appId}/v1/Me`).then((response) => {
+        if (response.status == 200) {
+          response.json().then((meservice) => {
+            this._username = meservice.id;
+            this.updatePushInfo();
+          });
+        }
+      });
+    }
 
     // Below this comment is code to initialise a material design lite view.
     const toggleSwitch = document.querySelector('.js-push-toggle-switch');
@@ -203,7 +215,7 @@ class AppController {
     if (!payloadText) {
       payloadText = 'Message from Mobile Services';
     }
-    let curlCommand = `curl -H 'x-api-key: API_KEY_FROM_PUSH_SERVICE_KEY' -H 'content-type: application/json' --data '{"users":["YOUR_USER_ID"],"notification": {"alert":"${payloadText}"}}' URL_FROM_PUSH_SERVICE_KEY/mobileservices/push/v1/backend/applications/any/notifications/users`;
+    let curlCommand = `curl -H 'x-api-key: API_KEY_FROM_PUSH_SERVICE_KEY' -H 'content-type: application/json' --data '{"users":["${this._username}"],"notification": {"alert":"${payloadText}"}}' URL_FROM_PUSH_SERVICE_KEY/mobileservices/push/v1/backend/applications/any/notifications/users`;
     let curlError = null;
 
     const curlCodeElement = document.querySelector('.js-curl-code');
