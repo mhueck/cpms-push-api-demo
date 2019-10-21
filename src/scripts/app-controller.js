@@ -6,8 +6,6 @@ class AppController {
 
     // This div contains the UI for CURL commands to trigger a push
     this._sendPushOptions = document.querySelector('.js-send-push-options');
-    this._subscriptionJSONCode = document.querySelector(
-      '.js-subscription-json');
     this._payloadTextField = document.querySelector('.js-payload-textfield');
     this._payloadTextField.oninput = () => {
       this.updatePushInfo();
@@ -177,9 +175,6 @@ class AppController {
         console.log('Push registration response: ', response, response.status);
       }
     });
-
-    this._subscriptionJSONCode.textContent =
-      JSON.stringify(subscription, null, 2);
 
     // This is too handle old versions of Firefox where keys would exist
     // but auth wouldn't
