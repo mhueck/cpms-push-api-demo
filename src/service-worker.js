@@ -2,11 +2,6 @@
 
 /* eslint-env browser, serviceworker */
 
-importScripts('./scripts/libs/idb-keyval.js');
-importScripts('./scripts/analytics-sw.js');
-
-self.analytics.trackingId = 'UA-77119321-2';
-
 self.addEventListener('push', function(event) {
   console.log('Received push');
   let notificationTitle = 'Hello';
@@ -29,8 +24,7 @@ self.addEventListener('push', function(event) {
   event.waitUntil(
     Promise.all([
       self.registration.showNotification(
-        notificationTitle, notificationOptions),
-      self.analytics.trackEvent('push-received'),
+        notificationTitle, notificationOptions)
     ])
   );
 });
