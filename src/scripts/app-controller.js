@@ -3,8 +3,6 @@
 
 class AppController {
   constructor() {
-    this._encryptionHelper =
-      window.gauntface.EncryptionHelperFactory.generateHelper();
 
     const contentEncodingCode = document.querySelector(
       '.js-supported-content-encodings');
