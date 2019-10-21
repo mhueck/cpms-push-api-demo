@@ -208,7 +208,7 @@ class AppController {
     if (!payloadText) {
       payloadText = 'Message from Mobile Services';
     }
-    let curlCommand = `curl -H 'x-api-key: API_KEY_FROM_PUSH_SERVICE_KEY' -H 'content-type: application/json' --data '{"users":["YOUR_USER_ID"],"notification": {"alert":"${payloadText}"}}' URL_FROM_PUSH_SERVICE_KEY`;
+    let curlCommand = `curl -H 'x-api-key: API_KEY_FROM_PUSH_SERVICE_KEY' -H 'content-type: application/json' --data '{"users":["YOUR_USER_ID"],"notification": {"alert":"${payloadText}"}}' URL_FROM_PUSH_SERVICE_KEY/mobileservices/push/v1/backend/applications/any/notifications/users`;
     let curlError = null;
 
     const curlCodeElement = document.querySelector('.js-curl-code');
