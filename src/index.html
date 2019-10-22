@@ -1,14 +1,13 @@
 <!doctype html>
 <html lang="">
 <head>
+  <!-- this is based upon https://github.com/gauntface/simple-push-demo/ -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <title>Simple Push Demo using SAP Mobile Services</title>
 
   <meta name="theme-color" content="#2e3aa1">
-
-  <link rel="manifest" href="./manifest.json">
 
   <link rel="shortcut icon" href="./images/logo-32x32.png">
 
@@ -51,7 +50,8 @@
             <h4>CURL Command</h4>
             <p class="js-curl-copy-msg">Copy and paste the following CURL
             command into your terminal to send a push message to your
-            browser.</p>
+            browser. Replace API_KEY_FROM_PUSH_SERVICE_KEY and URL_FROM_PUSH_SERVICE_KEY
+            with the values from the Service Key fro mthe Mobile Notification service.</p>
             <p class="js-curl-error-msg"></p>
 
             <pre class="snippet-code"><code class="code-example js-curl-code language-markup"></code></pre>
@@ -68,9 +68,7 @@
   </div>
 
   <script src="./scripts/constants.js"></script>
-  <script src="./scripts/libs/idb-keyval.js"></script>
   <script src="./scripts/libs/snippets.js"></script>
-  <script src="./scripts/encryption/helpers.js"></script>
 
   <script src="./scripts/push-client.js"></script>
   <script src="./scripts/app-controller.js"></script>

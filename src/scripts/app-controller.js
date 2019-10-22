@@ -4,6 +4,11 @@
 class AppController {
   constructor() {
 
+    if (window.location.hostname.includes("github.com")
+      || window.location.hostname.includes("pixbrix")) {
+      alert('This Push API demo will only work when being accessed through SAP Mobile Services');
+      return;
+    }
     // This div contains the UI for CURL commands to trigger a push
     this._sendPushOptions = document.querySelector('.js-send-push-options');
     this._payloadTextField = document.querySelector('.js-payload-textfield');
@@ -11,14 +16,15 @@ class AppController {
       this.updatePushInfo();
     };
     this._username = 'YOUR_USERNAME';
+    // this might not always work but is also not crucial for push to work. It just retrieves username and first name, both used for the curl example.
     const appId = window.location.hostname.replace(/^[^\.]+-([^-\.]+)\..+$/, '$1');
-    if( appId ) {
+    if (appId) {
       fetch(`/mobileservices/application/${appId}/userservice/application/${appId}/v1/Me`).then((response) => {
         if (response.status == 200) {
           response.json().then((meservice) => {
             this._username = meservice.id;
-            if( meservice.name && meservice.name.givenName ) {
-              this._payloadTextField.value = "Hello " +meservice.name.givenName;
+            if (meservice.name && meservice.name.givenName) {
+              this._payloadTextField.value = "Hello " + meservice.name.givenName;
             }
             this.updatePushInfo();
           });
@@ -56,13 +62,13 @@ class AppController {
 
     this._toggleSwitch = toggleSwitch;
 
-    // this loads the public key from Mobile Services
+    // this loads the public key from Mobile Services and creates a new push subscription for the browser
     fetch('/mobileservices/push/v1/runtime/applications/dummy/pushconfigurations/os/w3cpushapi/pushid').then((response) => {
       if (response.status >= 400 && response.status < 500) {
         return response.text()
           .then((responseText) => {
             console.log('Failed web push response: ', response, response.status);
-            throw new Error(`Failed to send push message via web push protocol: ` +
+            throw new Error(`Failed to read Mobile Services server key (maybe W3C Push API is not enabled?): ` +
               `<pre>${encodeURI(responseText)}</pre>`);
           });
       }
