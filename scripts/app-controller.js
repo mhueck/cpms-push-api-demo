@@ -4,7 +4,7 @@
 class AppController {
   constructor() {
 
-    if (window.location.hostname.includes("github.com")
+    if (window.location.hostname.includes("github.io")
       || window.location.hostname.includes("pixbrix")) {
       alert('This Push API demo will only work when being accessed through SAP Mobile Services');
       return;
